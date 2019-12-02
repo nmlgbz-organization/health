@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf8" />
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>传智体检中心地址ַ</title>
+    <style type="text/css">
+        body, html{width: 100%;height: 100%;margin:0;font-family:"微软雅黑";}
+        #l-map{height:500px;width:200%;}
+        #r-result{width:100%; font-size:14px;line-height:20px;}
+    </style>
+    <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=Ae9ClWbDvXhRZQiXMkIDDBbGcVWvrVB5"></script>
+
+    <script src="../js/vue.js"></script>
+    <script src="../plugins/elementui/index.js"></script>
+    <script type="text/javascript" src="../js/jquery.min.js"></script>
+    <script src="../js/axios-0.18.0.js"></script>
+
+</head>
+<body>
+<div id="l-map"></div>
+<div id="r-result">
+
+    <div id="result"></div>
+</div>
+
+</body>
+
+<script type="text/javascript">
+
+    var map = new BMap.Map("l-map");
+    map.centerAndZoom(new BMap.Point(103.991363,30.72521), 15);
+    map.enableScrollWheelZoom(true);
+    var index = 0;
+    var myGeo = new BMap.Geocoder();
+    var adds = [
+
+    ];
+    function bdGEO(){
+        var add = adds[index];
+        geocodeSearch(add);
+        index++;
+    }
+    function geocodeSearch(add){
+        if(index < adds.length-1){
+            setTimeout(window.bdGEO,1000);
+        }
+        myGeo.getPoint(add, function(point){
+            if (point) {
+                //document.getElementById("result").innerHTML +=  index + "、" + add + ":" + point.lng + "," + point.lat + "</br>";
+                var address = new BMap.Point(point.lng, point.lat);
+                addMarker(address,new BMap.Label(index+":"+add,{offset:new BMap.Size(20,-10)}));
+            }
+        }, "成都市");
+    }
+    function addMarker(point,label){
+        var marker = new BMap.Marker(point);
+        map.addOverlay(marker);
+        marker.setLabel(label);
+    }
+    //window.onload(bdGEO());
+
+    var vue = new Vue({
+        el: '#app',
+        data: {
+            pagination: {//分页相关模型数据
+                currentPage: 1,//当前页码
+                pageSize: 10,//每页显示的记录数
+                total: 0,//总记录数
+                queryString: null//查询条件
+
+            },
+            dataList: [],//当前页要展示的分页列表数据
+            formData: {},//表单数据
+            dialogFormVisible: false,//增加表单是否可见
+            rules: {//校验规则
+                address: [{required: true, message: '项目编码为必填项', trigger: 'blur'}],
+            },
+            activeName: 'first'
+
+        },
+        //钩子函数，VUE对象初始化完成后自动执行
+        created() {
+            //this.findMap();
+            axios.get("/address/getAllmarker.do").then((res)=>{
+                if(res.data.flag){
+                    adds=res.data.data;
+                    bdGEO();
+                }
+            })
+        },
+        methods:{
+            findMap(){
+            // window.refresh();
+                location.reload();
+            }
+        }
+    })
+</script>
+
+
+</html>

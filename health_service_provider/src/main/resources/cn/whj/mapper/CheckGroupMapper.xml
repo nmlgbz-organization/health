@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.whj.mapper.CheckGroupMapper">
+
+  <insert id="insCheckGroup" parameterType="CheckGroup">
+    <selectKey keyProperty="id" order="AFTER" resultType="int">
+      select LAST_INSERT_ID()
+    </selectKey>
+    insert into t_checkgroup(code, name, helpCode, sex, remark, attention)
+    values
+    (#{code}, #{name}, #{helpCode}, #{sex}, #{remark}, #{attention})
+  </insert>
+
+  <insert id="insTItemGroups">
+    insert into t_checkgroup_checkitem(checkgroup_id, checkitem_id) values(#{param1},#{param2})
+  </insert>
+
+  <select id="findByCondition" parameterType="string" resultType="cn.whj.pojo.CheckGroup">
+    select * from t_checkgroup
+    <if test="_parameter != null and _parameter != ''">
+      where code=#{_parameter} or name=#{_parameter} or helpCode=#{_parameter}
+    </if>
+  </select>
+
+  <select id="findCheckItemIdsById" parameterType="int" resultType="int">
+    select checkitem_id from t_checkgroup_checkitem where checkgroup_id=#{id}
+  </select>
+
+  <delete id="delTItemGroupByGid" parameterType="int">
+    delete from t_checkgroup_checkitem where checkgroup_id=#{id}
+  </delete>
+
+  <update id="updGroup" parameterType="cn.whj.pojo.CheckGroup">
+    update t_checkgroup
+    <set>
+      <if test="code != null and code != ''">
+        code=#{code},
+      </if>
+      <if test="name != null and name != ''">
+        name=#{name},
+      </if>
+      <if test="helpCode != null and helpCode != ''">
+        helpCode=#{helpCode},
+      </if>
+      <if test="sex != null and sex != ''">
+        sex=#{sex},
+      </if>
+      <if test="remark != null and remark != ''">
+        remark=#{remark},
+      </if>
+      <if test="attention != null and attention != ''">
+        attention=#{attention},
+      </if>
+    </set>
+    where id=#{id}
+  </update>
+
+  <delete id="delGroupById" parameterType="int">
+    delete from t_checkgroup where id=#{id}
+  </delete>
+
+  <select id="findAll" resultType="cn.whj.pojo.CheckGroup">
+    select * from t_checkgroup
+  </select>
+
+
+  <select id="findTSetmealGroupCountByid" parameterType="int" resultType="int">
+    select count(*) from t_setmeal_checkgroup where checkgroup_id=#{id}
+  </select>
+
+  <resultMap id="checkGroupMap" type="cn.whj.pojo.CheckGroup">
+    <id column="id" property="id"/>
+    <collection property="checkItems" ofType="cn.whj.pojo.CheckItem" javaType="arraylist" column="id"
+      select="cn.whj.mapper.CheckItemMapper.findById"/>
+  </resultMap>
+  
+  <select id="findById" resultMap="checkGroupMap" parameterType="int">
+    select * from t_checkgroup where id in (select checkgroup_id from t_setmeal_checkgroup where setmeal_id=#{id})
+  </select>
+
+</mapper>

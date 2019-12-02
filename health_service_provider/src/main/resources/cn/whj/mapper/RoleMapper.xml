@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.whj.mapper.RoleMapper">
+
+
+    <select id="findRoleByUserId" resultType="cn.whj.pojo.Role">
+    select * from t_role where id in (select role_id from t_user_role where user_id=#{userId})
+  </select>
+    <insert id="insertRid4Permissionid">
+      insert into t_role_permission (role_id, permission_id)values (#{param1},#{param2})
+    </insert>
+    <insert id="save" parameterType="cn.whj.pojo.Role" keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+    insert  into t_role (name, keyword, description) values (#{name},#{keyword},#{description})
+  </insert>
+    <select id="findPermissionById" resultType="cn.whj.pojo.Permission">
+    select * from t_permission tp,t_role_permission trp where tp.id=trp.permission_id and trp.role_id=#{id}
+  </select>
+
+
+    <delete id="deleteById" parameterType="int">
+    delete from t_role where id=#{id}
+  </delete>
+    <select id="findAll" resultType="cn.whj.pojo.Role">
+      select * from t_role
+    </select>
+
+    <!--//角色分页查询-YL-->
+    <select id="pageQuery" parameterType="string" resultType="cn.whj.pojo.Role">
+        select * from t_role
+        <where>
+            <if test="_parameter != null and _parameter.length > 0">
+                and name like '%${_parameter}%' or keyword like '%${_parameter}%' or description like '%${_parameter}%'
+            </if>
+        </where>
+    </select>
+
+    <!--根据名字查询角色，保证角色的唯一1性-->
+    <select id="findByName" parameterType="string" resultType="cn.whj.pojo.Role">
+    select  * from t_role where name=#{name}
+  </select>
+
+  <!--//删除用户角色关系表关系-->
+  <delete id="delete" parameterType="int">
+    delete from t_user_role where user_id = #{id}
+  </delete>
+<!--添加用户角色关联关系-->
+  <insert id="setUserAndRole" parameterType="hashmap">
+    insert into t_user_role(user_id,role_id) values (#{user_id},#{role_id});
+  </insert>
+
+  <!--根据用户id查询关联的角色id-->
+  <select id="findRoleIdsByUid" parameterType="int" resultType="int">
+    select role_id from t_user_role where user_id = #{id}
+  </select><!--角色编辑时查询角色的基本信息-YL-->
+    <select id="findById" parameterType="int" resultType="cn.whj.pojo.Role">
+      select * from t_role where id = #{id}
+  </select>
+
+    <!--角色编辑时查询角色已经存在的权限项进行回显-YL-->
+    <select id="findPermissionIds" parameterType="int" resultType="int">
+      select permission_id from t_role_permission where role_id = #{role_id}
+  </select>
+
+    <!--修改t_role表中角色的基本信息-YL-->
+    <update id="editRole" parameterType="cn.whj.pojo.Role">
+        update t_role
+        <set>
+            <if test="name != null">
+                name = #{name},
+            </if>
+            <if test="keyword != null">
+                keyword = #{keyword},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+
+    <!--删除该角色已经存在关联的permission-->
+    <delete id="deleteFromRolePermissionByRoleId" parameterType="int">
+        delete from t_role_permission where role_id = #{roleId}
+    </delete>
+
+    <!--//修改t_role_permission表中角色和权限项的关联-YL-->
+    <insert id="editRolePermission" parameterType="java.util.Map">
+        insert into t_role_permission(role_id,permission_id) values(#{roleId},#{permissionId})
+    </insert>
+
+  <!--//删除用户角色关系表关系-->
+<!--  <delete id="delete" parameterType="int">
+    delete from t_user_role where user_id = #{id}
+  </delete>-->
+  <!--添加用户角色关联关系-->
+  <!--<insert id="setUserAndRole" parameterType="hashmap">
+    insert into t_user_role(user_id,role_id) values (#{user_id},#{role_id});
+  </insert>-->
+
+  <!--根据用户id查询关联的角色id-->
+  <!--<select id="findRoleIdsByUid" parameterType="int" resultType="int">
+    select role_id from t_user_role where user_id = #{id}
+  </select>-->
+</mapper>

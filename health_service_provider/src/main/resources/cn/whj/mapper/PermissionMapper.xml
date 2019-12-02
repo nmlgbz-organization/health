@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.whj.mapper.PermissionMapper">
+
+    <!--根据角色id查询权限-->
+    <select id="findByRoleId" resultType="cn.whj.pojo.Permission">
+    select * from t_permission where id in (select permission_id from t_role_permission where role_id=#{roleId})
+  </select>
+
+    <!--通过查询条件查询出所有的权限列表信息-YL-->
+    <select id="queryByCondition" parameterType="java.lang.String" resultType="cn.whj.pojo.Permission">
+        select * from t_permission
+        <where>
+            <if test="_parameter != null and _parameter.length > 0">
+                and name like '%${_parameter}%' or keyword like '%${_parameter}%' or description like '%${_parameter}%'
+            </if>
+        </where>
+    </select>
+
+    <!--新增权限项时通过权限键词查询t_permission表判断是否已经被定义-YL-->
+    <select id="findByKeyword" parameterType="java.lang.String" resultType="Integer">
+        select count(id) from t_permission where keyword = #{keyword}
+    </select>
+
+    <!--新增权限项-YL-->
+    <insert id="addPermission" parameterType="cn.whj.pojo.Permission">
+        insert into t_permission(name,keyword,description) values(#{name},#{keyword},#{description})
+    </insert>
+
+    <!--在编辑权限项时查询数据库信息进行回显-YL-->
+    <select id="findById" parameterType="Integer" resultType="cn.whj.pojo.Permission">
+        select * from t_permission where id = #{id}
+    </select>
+
+    <!--修改更新权限项信息-YL-->
+    <update id="editPermission" parameterType="cn.whj.pojo.Permission">
+        update t_permission set name = #{name},keyword  = #{keyword},description = #{description}  where id = #{id}
+    </update>
+
+    <!--删除权限项-YL-->
+    <delete id="delete" parameterType="Integer">
+        delete from t_permission where id = #{id}
+    </delete>
+
+    <!--查询所有权限项-YL-->
+    <select id="findAll" resultType="cn.whj.pojo.Permission">
+        select * from t_permission
+    </select>
+</mapper>

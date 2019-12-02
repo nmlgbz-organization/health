@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.whj.mapper.UserMapper">
+
+
+  <select id="findUserByUsername" resultType="cn.whj.pojo.User">
+    select * from t_user where username=#{username}
+  </select>
+
+
+  <!--通过角色Id查询依赖的用户数-->
+  <select id="findCountByRoleId" parameterType="int" resultType="int">
+    select count(*) from t_user_role where role_id=#{id}
+  </select>
+
+  <select id="findUsersByCondition" parameterType="java.lang.String" resultType="cn.whj.pojo.User">
+    select * from t_user
+    <where>
+     <if test="_parameter != null and _parameter != ''">
+         and username=#{_parameter}
+     </if>
+    </where>
+  </select>
+
+    <!--  新增用户 -->
+    <insert id="save" parameterType="cn.whj.pojo.User">
+        <selectKey keyProperty="id" resultType="int" order="AFTER">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        insert into t_user (birthday,gender,username,password,remark,station,telephone)
+        values
+        (#{birthday},#{gender},#{username},#{password},#{remark},#{station},#{telephone})
+    </insert>
+    <insert id="saveCheckRoleId">
+        insert into t_user_role (user_id,role_id) values (#{param1},#{param2})
+    </insert>
+    <select id="findByUsername" resultType="cn.whj.pojo.User" parameterType="string">
+        select * from t_user where username = #{username}
+    </select>
+
+    <!--通过id查询t_user或用用户名判断时否时在删除自己-->
+    <select id="checkUser" parameterType="int" resultType="string">
+        select username from t_user where id = #{id}
+    </select>
+
+  <!--删除用户之前先删除用户与角色的关联信息-YL-->
+  <select id="deleteUserRole" parameterType="int">
+      delete from t_user_role where user_id = #{user_id}
+  </select>
+
+  <!--根据用户Id删除用户，但不影响角色-YL-->
+  <delete id="deleteByUserId" parameterType="int">
+    delete from t_user where id = #{id}
+  </delete>
+
+
+  <update id="update" parameterType="cn.whj.pojo.User">
+    update t_user
+    <set>
+      <if test="birthday != null ">
+        birthday = #{birthday},
+      </if>
+      <if test="gender != null and gender !='' ">
+        gender = #{gender},
+      </if>
+      <if test="username != null and username != ''">
+        username = #{username},
+      </if>
+      <if test="password != null and  password != ''">
+        password = #{password},
+      </if>
+      <if test ="remark != null and  remark!= '' ">
+        remark = #{remark},
+      </if>
+      <if test="telephone != null and telephone != ''">
+        telephone = #{telephone},
+      </if>
+      <if test="station != null and station != ''">
+        station = #{station},
+      </if>
+    </set>
+    where id = #{id}
+  </update>
+
+  <select id="selectByCondition" parameterType="string" resultType="cn.whj.pojo.User">
+    select * from t_user
+    <if test="_parameter != null and _parameter != ''">
+      where id =#{_parameter} or username = #{_parameter} or telephone=#{_parameter}
+    </if>
+  </select>
+
+  <select id="findById" parameterType="int" resultType="cn.whj.pojo.User">
+    select  * from t_user where id =#{id}
+  </select>
+
+<!--  <insert id="addUser" parameterType="cn.whj.pojo.User">
+    <selectKey keyProperty="id" order="AFTER" resultType="int">
+      select LAST_INSERT_ID()
+    </selectKey>
+    insert into t_user(birthday,gender,username,password,remark,telephone)values
+    (#{birthday},#{gender},#{username},#{password},#{remark},#{telephone})
+  </insert>-->
+
+  <delete id="delete" parameterType="int">
+    delete  from t_user where id = #{id}
+  </delete>
+
+    <delete id="delUidAndRid" parameterType="int" >
+        delete  from t_user_role where user_id = #{id}
+    </delete>
+
+  <select id="findCountByUsername" parameterType="cn.whj.pojo.User" resultType="int">
+    select count(*) from t_user where username = #{username} and id != #{id}
+  </select>
+</mapper>

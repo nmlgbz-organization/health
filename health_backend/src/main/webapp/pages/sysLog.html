@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- 页面meta -->
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>传智健康</title>
+  <meta name="description" content="传智健康">
+  <meta name="keywords" content="传智健康">
+  <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="../plugins/elementui/index.css">
+  <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="hold-transition">
+<div id="app">
+  <div class="content-header">
+    <h1>日志记录
+    </h1>
+    <el-breadcrumb separator-class="el-icon-arrow-right" class="breadcrumb">
+      <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+      <el-breadcrumb-item>日志管理</el-breadcrumb-item>
+    </el-breadcrumb>
+  </div>
+  <div class="app-container">
+    <div class="box">
+
+      <el-table size="small" current-row-key="id" :data="dataList" stripe highlight-current-row>
+        <el-table-column type="index" align="center" label="序号"></el-table-column>
+        <el-table-column prop="username" label="访问者" align="center"></el-table-column>
+        <el-table-column prop="visitTime" label="访问时间" align="center"></el-table-column>
+        <el-table-column prop="ip" label="ip来源" align="center"></el-table-column>
+        <el-table-column prop="url" label="访问url" align="center"></el-table-column>
+        <el-table-column prop="method" label="访问方法" align="center"></el-table-column>
+      </el-table>
+      <div class="pagination-container">
+        <el-pagination
+            class="pagiantion"
+            @current-change="handleCurrentChange"
+            :current-page="pagination.currentPage"
+            :page-size="pagination.pageSize"
+            layout="total, prev, pager, next, jumper"
+            :total="pagination.total">
+        </el-pagination>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+<!-- 引入组件库 -->
+<script src="../js/vue.js"></script>
+<script src="../plugins/elementui/index.js"></script>
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script src="../js/axios-0.18.0.js"></script>
+<script>
+  var vue = new Vue({
+    el: '#app',
+    data: {
+      pagination: {//分页相关模型数据
+        currentPage: 1,//当前页码
+        pageSize: 10,//每页显示的记录数
+        total: 0,//总记录数
+        queryString: null//查询条件
+      },
+      dataList: [],//当前页要展示的分页列表数据
+
+
+    },
+    //钩子函数，VUE对象初始化完成后自动执行
+    created() {
+      this.findPage();
+    },
+    methods: {
+
+      //分页查询
+      findPage(index) {
+        if (index == 1) {
+          this.pagination.currentPage = 1;
+        }
+        var param = {
+          currentPage: this.pagination.currentPage,
+          pageSize: this.pagination.pageSize,
+          queryString: this.pagination.queryString
+        };
+        axios.post("/sysLog/pageQuery.do", param).then((resp) => {
+          this.pagination.total = resp.data.total;
+          this.dataList = resp.data.rows;
+        }).catch((r) => {
+          this.showAuthorityMessage(r);
+        });
+      },
+      //切换页码
+      handleCurrentChange(currentPage) {
+        //重新设置最新的页码
+        vue.pagination.currentPage = currentPage;
+        vue.findPage();
+      },
+      // 删除
+      handleDelete(row) {
+        vue.$confirm("此操作会无可挽回的删除这条数据，你确定？","提示",{type:'warning'}).then(()=>{
+          axios.get("/sysLog/delete/"+row.id+".do").then((resp) => {
+            if (resp.data.flag) {
+              vue.$message({
+                message: resp.data.message,
+                type: "success"
+              });
+              vue.findPage();
+            }else {
+              vue.$message.error(resp.data.message);
+            }
+          }).catch((r) => {
+            this.showAuthorityMessage(r);
+          });
+        })
+      }
+    }
+  })
+</script>
+</html>

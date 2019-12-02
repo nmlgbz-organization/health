@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.whj.mapper.SysLogMapper">
+
+    <insert id="save" parameterType="cn.whj.pojo.SysLog">
+       insert into t_syslog(visitTime,username,ip,url,method) values(#{visitTime},#{username},#{ip},#{url},#{method})
+    </insert>
+
+    <select id="findall" resultType="cn.whj.pojo.SysLog">
+        select  * from t_syslog;
+    </select>
+
+    <select id="selectByCondition" resultType="cn.whj.pojo.SysLog" parameterType="string">
+        select * from t_syslog
+        <where>
+            <if test="_parameter != null and _parameter != ''">
+                method = #{_parameter} or url= #{_parameter}
+            </if>
+        </where>
+    </select>
+</mapper>

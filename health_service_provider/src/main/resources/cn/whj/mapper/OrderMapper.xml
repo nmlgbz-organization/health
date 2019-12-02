@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.whj.mapper.OrderMapper">
+
+
+  <select id="findByCondition" parameterType="Order" resultType="Order">
+    select * from t_order
+    <where>
+      <if test="id != null">
+        and id = #{id}
+      </if>
+      <if test="memberId != null">
+        and member_id = #{memberId}
+      </if>
+      <if test="orderDate != null">
+        and orderDate = #{orderDate}
+      </if>
+      <if test="orderType != null">
+        and orderType = #{orderType}
+      </if>
+      <if test="orderStatus != null">
+        and orderStatus = #{orderStatus}
+      </if>
+      <if test="setmealId != null">
+        and setmeal_id = #{setmealId}
+      </if>
+    </where>
+
+  </select>
+
+  <insert id="add" parameterType="Order">
+    <selectKey order="AFTER" keyProperty="id" resultType="int">
+      select last_insert_id()
+    </selectKey>
+    insert into t_order(member_id, orderDate, orderType, orderStatus, setmeal_id,address_id)
+    values
+    (#{memberId},#{orderDate},#{orderType},#{orderStatus},#{setmealId},#{addressId})
+  </insert>
+
+
+  <select id="findDetailByOrderId" parameterType="int" resultType="map">
+    select m.name member,s.name setmeal,o.orderDate orderDate,o.orderType orderType
+    from t_member m,t_setmeal s,t_order o
+    where o.id=#{id} and o.setmeal_id=s.id and o.member_id = m.id
+  </select>
+
+  <select id="findOrderCountByDate" resultType="java.lang.Integer">
+    select count(*) from t_order where orderDate=#{today}
+  </select>
+
+  <select id="findOrderCountAfterDate" resultType="java.lang.Integer">
+    select count(*) from t_order where orderDate &gt;= #{firstDay4Week}
+  </select>
+
+  <select id="findVisitsCountByDate" resultType="java.lang.Integer">
+    select count(*) from t_order where orderDate = #{today} and orderStatus = '已到诊'
+  </select>
+
+  <select id="findVisitsCountAfterDate" resultType="java.lang.Integer">
+    select count(*) from t_order where orderDate &gt;= #{firstDay4Week} and orderStatus = '已到诊'
+  </select>
+
+  <select id="findHotSetmeal" resultType="java.util.Map">
+    select s.name,
+           count(o.id)                                   setmeal_count,
+           count(o.id) / (select count(id) from t_order) proportion
+    from t_order o
+           inner join t_setmeal s on s.id = o.setmeal_id
+    group by o.setmeal_id
+    order by setmeal_count desc
+    limit 0,4
+  </select>
+
+  <!--根据地址id查询该地址预约数-->
+  <select id="findCountByAddressId" parameterType="int" resultType="int">
+    select count(*) from t_order where address_id=#{id}
+
+  </select>
+
+
+
+
+  <resultMap id="orderListResultMap" type="cn.whj.pojo.Order">
+    <id column="id" property="id"/>
+    <result column="member_id" property="memberId"/>
+    <result column="orderDate" property="orderDate"/>
+    <result column="orderType" property="orderType"/>
+    <result column="orderStatus" property="orderStatus"/>
+    <result column="setmeal_id" property="setmealId"/>
+    <result column="address_id" property="addressId"/>
+    <association property="member" javaType="cn.whj.pojo.Member">
+      <id column="id" property="id"/>
+      <result column="fileNumber" property="fileNumber"/>
+      <result column="name" property="name"/>
+      <result column="sex" property="sex"/>
+      <result column="idCard" property="idCard"/>
+      <result column="phoneNumber" property="phoneNumber"/>
+      <result column="regTime" property="regTime"/>
+      <result column="password" property="password"/>
+      <result column="email" property="email"/>
+      <result column="birthday" property="birthday"/>
+      <result column="remark" property="remark"/>
+    </association>
+    <association property="address" javaType="cn.whj.pojo.Address">
+      <id column="id" property="id"/>
+      <result column="address" property="address"/>
+      <result column="lng" property="lng"/>
+      <result column="lat" property="lat"/>
+      <result column="regTime" property="regTime"/>
+    </association>
+  </resultMap>
+
+  <!--查询所有的预约订单以及相关的会员信息以及地址信息YL-->
+  <select id="findOrderList" parameterType="java.lang.String" resultMap="orderListResultMap">
+    select * from t_order o left join t_member m on o.member_id = m.id inner join t_address a on o.address_id = a.id
+      <if test="_parameter != null and _parameter.length > 0">
+        and m.name like '%${_parameter}%' or a.address like '%${_parameter}%' or o.orderType like
+        '%${_parameter}%' or m.phoneNumber like '%${_parameter}%'
+      </if>
+  </select>
+
+</mapper>

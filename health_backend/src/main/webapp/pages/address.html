@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- 页面meta -->
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>传智健康</title>
+  <meta name="description" content="传智健康">
+  <meta name="keywords" content="传智健康">
+  <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport">
+  <!-- 引入样式 -->
+  <link rel="stylesheet" href="../plugins/elementui/index.css">
+  <link rel="stylesheet" href="../plugins/font-awesome/css/font-awesome.min.css">
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body class="hold-transition">
+<div id="app">
+  <div class="content-header">
+    <h1>首页
+      <small>公司分布图</small>
+    </h1>
+
+  </div>
+  <div class="app-container">
+    <template>
+      <el-tabs @tab-click="trigger()" v-model="activeName" >
+        <el-tab-pane  label="分布图" name="first">
+          <iframe id="iframe1"  name="right" class="el-main" src="map.html" width="100%" height="4000px" frameborder="0"></iframe>
+        </el-tab-pane>
+        <el-tab-pane label="详细信息" name="second">
+
+          <div class="box">
+            <div class="filter-container">
+              <el-input placeholder="公司地址" v-model="pagination.queryString" style="width: 200px;"
+                        class="filter-item"></el-input>
+              <el-button @click="findPage(1)" class="dalfBut">查询</el-button>
+              <el-button type="primary" class="butT" @click="handleCreate()">新建</el-button>
+            </div>
+            <el-table size="small" current-row-key="id" :data="dataList" stripe highlight-current-row>
+              <el-table-column type="index" align="center" label="序号"></el-table-column>
+              <el-table-column prop="address" label="公司地址" align="center"></el-table-column>
+              <el-table-column prop="lng" label="所在经度" align="center"></el-table-column>
+              <el-table-column prop="lat" label="所在维度" align="center"></el-table-column>
+              <el-table-column label="操作" align="center">
+                <template slot-scope="scope">
+                  <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="pagination-container">
+              <el-pagination
+                  class="pagiantion"
+                  @current-change="handleCurrentChange"
+                  :current-page="pagination.currentPage"
+                  :page-size="pagination.pageSize"
+                  layout="total, prev, pager, next, jumper"
+                  :total="pagination.total">
+              </el-pagination>
+            </div>
+            <!-- 新增标签弹层 -->
+            <div class="add-form">
+              <el-dialog title="新增地址" :visible.sync="dialogFormVisible">
+                <iframe name="right" class="el-main" src="address_insert.html" width="100%" height="580px"
+                        frameborder="0"></iframe>
+              </el-dialog>
+            </div>
+
+          </div>
+
+        </el-tab-pane>
+
+      </el-tabs>
+    </template>
+
+
+  </div>
+</div>
+</body>
+<!-- 引入组件库 -->
+<script src="../js/vue.js"></script>
+<script src="../plugins/elementui/index.js"></script>
+<script type="text/javascript" src="../js/jquery.min.js"></script>
+<script src="../js/axios-0.18.0.js"></script>
+<script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=FeFfCGlycbRpAvhqrbqlfUkurgy9WMlW">
+
+</script>
+<script type="text/javascript">
+  var vue = new Vue({
+    el: '#app',
+    data: {
+      pagination: {//分页相关模型数据
+        currentPage: 1,//当前页码
+        pageSize: 10,//每页显示的记录数
+        total: 0,//总记录数
+        queryString: null//查询条件
+
+      },
+      dataList: [],//当前页要展示的分页列表数据
+      formData: {},//表单数据
+      dialogFormVisible: false,//增加表单是否可见
+      rules: {//校验规则
+        address: [{required: true, message: '项目编码为必填项', trigger: 'blur'}],
+      },
+      activeName: 'first'
+
+    },
+    //钩子函数，VUE对象初始化完成后自动执行
+    created() {
+      this.findPage();
+    },
+    methods: {
+      //权限不足
+      showAuthorityMessage(r) {
+        var messeage = 'Error: Request failed with status code 403';
+        if (r == messeage) {
+          this.$message.error('你没有权限执行这次操作');
+          return;
+        } else {
+          this.$message.error('未知错误');
+          return;
+        }
+      },
+      //分页查询
+      findPage(index) {
+        if (index == 1) {
+          this.pagination.currentPage = 1;
+        }
+        var param = {
+          currentPage: this.pagination.currentPage,
+          pageSize: this.pagination.pageSize,
+          queryString: this.pagination.queryString
+        };
+        axios.post("/address/pageQuery.do", param).then((resp) => {
+          this.pagination.total = resp.data.total;
+          this.dataList = resp.data.rows;
+        }).catch((r) => {
+          this.showAuthorityMessage(r);
+        });
+      },
+      // 重置表单
+      resetForm() {
+        this.formData = {};
+      },
+      //初始化地图
+      /*initMap() {
+        var map = new BMap.Map("l-map");
+        map.centerAndZoom(new BMap.Point(103.991363,30.72521), 15);
+        map.enableScrollWheelZoom(true);
+      },*/
+      // 弹出添加窗口
+      handleCreate() {
+        this.resetForm();
+        // this.initMap();
+
+        this.dialogFormVisible = true;
+
+      },
+      //切换页码
+      handleCurrentChange(currentPage) {
+        //重新设置最新的页码
+        vue.pagination.currentPage = currentPage;
+        vue.findPage();
+      },
+      // 删除
+      handleDelete(row) {
+        vue.$confirm("此操作会无可挽回的删除这条数据，你确定？", "提示", {type: 'warning'}).then(() => {
+          axios.get("/address/delete/" + row.id + ".do").then((resp) => {
+            if (resp.data.flag) {
+              vue.$message({
+                message: resp.data.message,
+                type: "success"
+              });
+              vue.findPage();
+            } else {
+              vue.$message.error(resp.data.message);
+            }
+          }).catch((r) => {
+            this.showAuthorityMessage(r);
+          });
+        })
+      },
+      trigger() {
+       document.getElementById("iframe1").contentWindow.vue.findMap();
+      }
+    }
+  })
+
+</script>
+</html>
